@@ -1,0 +1,72 @@
+<head>
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <div style="padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 5px">
+    <h1 style="color: #333; font-size: 24px; margin-bottom: 10px">Blink</h1>
+    <p style="color: #666; font-size: 16px">Premium plan - $2.5 per vehicle</p>
+  </div>
+
+  <form id="payment-form" style="margin-top: 20px">
+    <div id="payment-element">
+      <!-- Elements will create form elements here -->
+    </div>
+    <button
+      id="submit"
+      class="button"
+      style="
+        width: 100%;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 20px;
+      "
+    >
+      Upgrade to premium
+    </button>
+    <div id="error-message" style="color: #ff0000; margin-top: 10px">
+      <!-- Display error message to your customers here -->
+    </div>
+  </form>
+</body>
+<script>
+  var urlParams = new URLSearchParams(window.location.search);
+  const stripe = Stripe(urlParams.get("stripe_key"));
+
+  const options = {
+    clientSecret: urlParams.get("intent_id"), // TODO: call api to fetch client secret from server
+    appearance: { /*...*/ },
+  };
+
+  console.log(options);
+
+  const elements = stripe.elements(options);
+
+  const paymentElement = elements.create("payment");
+  paymentElement.mount("#payment-element");
+
+  const form = document.getElementById("payment-form");
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const { error } = await stripe.confirmSetup({
+      elements,
+      confirmParams: {
+        return_url: "https://example.com/success",
+      },
+    });
+
+    if (error) {
+      const messageContainer = document.querySelector("#error-message");
+      messageContainer.textContent = error.message;
+    } else {
+      // Your customer will be redirected to your `return_url`. For some payment
+      // methods like iDEAL, your customer will be redirected to an intermediate
+      // site first to authorize the payment, then redirected to the `return_url`.
+    }
+  });
+</script>
